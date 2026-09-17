@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/appointment_form/appointment_form_page.dart';
 import '../features/calendar/calendar_page.dart';
 import '../features/home/home_page.dart';
 
@@ -26,9 +27,13 @@ class _AppShellState extends State<AppShell> {
   ];
 
   void _onAddPressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Cadastro de compromissos chega na Etapa 6.'),
+    final now = DateTime.now();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AppointmentFormPage(
+          initialDate: DateTime.utc(now.year, now.month, now.day),
+        ),
       ),
     );
   }

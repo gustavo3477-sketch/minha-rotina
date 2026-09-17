@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../domain/date_utils.dart' as dutil;
 import '../../domain/providers.dart';
+import '../appointment_form/appointment_form_page.dart';
 import 'widgets/appointment_tile.dart';
 import 'widgets/schedule_day_summary.dart';
 
@@ -61,6 +62,15 @@ class DayDetailPage extends ConsumerWidget {
                         AppointmentTile(
                           appointment: appointment,
                           category: categoriesById[appointment.categoryId],
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AppointmentFormPage(
+                                initialDate: date,
+                                existing: appointment,
+                              ),
+                            ),
+                          ),
                         ),
                     ],
                   );
@@ -71,9 +81,10 @@ class DayDetailPage extends ConsumerWidget {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cadastro de compromissos chega na Etapa 6.'),
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AppointmentFormPage(initialDate: date),
           ),
         ),
         child: const Icon(Icons.add),

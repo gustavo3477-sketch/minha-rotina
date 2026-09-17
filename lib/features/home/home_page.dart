@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../domain/date_utils.dart' as dutil;
 import '../../domain/models/category.dart';
 import '../../domain/providers.dart';
+import '../appointment_form/appointment_form_page.dart';
 import '../day_detail/day_detail_page.dart';
 import '../day_detail/widgets/appointment_tile.dart';
 import '../day_detail/widgets/schedule_day_summary.dart';
@@ -109,6 +110,15 @@ class HomePage extends ConsumerWidget {
                         AppointmentTile(
                           appointment: appointment,
                           category: categoriesById[appointment.categoryId],
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => AppointmentFormPage(
+                                initialDate: today,
+                                existing: appointment,
+                              ),
+                            ),
+                          ),
                         ),
                     ],
                   );

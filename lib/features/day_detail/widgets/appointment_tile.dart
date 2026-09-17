@@ -4,13 +4,19 @@ import '../../../core/color_utils.dart';
 import '../../../domain/models/appointment.dart';
 import '../../../domain/models/category.dart';
 
-/// Uma linha de compromisso (seção 11/12) na lista do dia. Só leitura por
-/// ora — criar/editar compromissos chega na Etapa 6.
+/// Uma linha de compromisso (seção 11/12) na lista do dia. Tocar abre a
+/// edição (Etapa 6) daquele compromisso.
 class AppointmentTile extends StatelessWidget {
   final Appointment appointment;
   final Category? category;
+  final VoidCallback? onTap;
 
-  const AppointmentTile({super.key, required this.appointment, this.category});
+  const AppointmentTile({
+    super.key,
+    required this.appointment,
+    this.category,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +24,7 @@ class AppointmentTile extends StatelessWidget {
     final tagColor = category != null ? colorFromHex(category!.color) : null;
 
     return ListTile(
+      onTap: onTap,
       leading: CircleAvatar(
         backgroundColor: tagColor ?? theme.colorScheme.surfaceContainerHigh,
         child: Icon(
