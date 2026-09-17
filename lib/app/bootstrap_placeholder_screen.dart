@@ -11,7 +11,10 @@ class BootstrapPlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final today = DateFormat("EEEE, d 'de' MMMM", 'pt_BR').format(DateTime.now());
+    final today = DateFormat(
+      "EEEE, d 'de' MMMM",
+      'pt_BR',
+    ).format(DateTime.now());
 
     return Scaffold(
       body: SafeArea(
@@ -29,16 +32,15 @@ class BootstrapPlaceholderScreen extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   'Minha Rotina',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(context).textTheme.headlineMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   today,
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text(
