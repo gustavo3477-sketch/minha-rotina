@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../features/calendar/calendar_page.dart';
+import '../features/home/home_page.dart';
 
 /// Navegação inferior (seção 17): Hoje | Calendário | + | Agenda | Ajustes.
 ///
-/// Só "Calendário" está implementado por enquanto (Etapa 4). As outras
+/// "Hoje" e "Calendário" estão implementadas (Etapas 4 e 5). As outras
 /// abas mostram um aviso honesto em vez de fingir uma tela pronta —
-/// chegam nas etapas 5, 8 e 10.
+/// chegam nas etapas 8 e 10.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -15,10 +16,10 @@ class AppShell extends StatefulWidget {
 }
 
 class _AppShellState extends State<AppShell> {
-  int _index = 1; // começa em "Calendário", única aba pronta até agora
+  int _index = 0; // começa em "Hoje" — a tela que a pessoa quer ver primeiro
 
   static const _pages = [
-    _ComingSoonPage(title: 'Hoje', etapa: 5),
+    HomePage(),
     CalendarPage(),
     _ComingSoonPage(title: 'Agenda', etapa: 8),
     _ComingSoonPage(title: 'Ajustes', etapa: 10),

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/providers.dart';
+import 'models/appointment.dart';
 import 'models/category.dart';
 import 'models/schedule_exception.dart';
 import 'models/schedule_version.dart';
@@ -51,4 +52,15 @@ final scheduleEngineProvider =
         categories: categories,
         exceptions: exceptions,
       );
+    });
+
+/// Compromissos de uma única data (seção 11: um dia pode ter vários).
+///
+/// A expansão de recorrências (seção 13) só chega na Etapa 7 — por ora isto
+/// reflete só a ocorrência-âncora gravada no banco, o que é o esperado
+/// porque não há como criar compromissos ainda (Etapa 6).
+final appointmentsForDateProvider =
+    FutureProvider.family<List<Appointment>, String>((ref, isoDate) {
+      final repo = ref.watch(appointmentRepositoryProvider);
+      return repo.getForDate(isoDate);
     });

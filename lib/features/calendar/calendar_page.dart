@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/color_utils.dart';
 import '../../domain/date_utils.dart' as dutil;
 import '../../domain/providers.dart';
 import '../../domain/schedule_day.dart';
+import '../day_detail/day_detail_page.dart';
 import 'current_month_provider.dart';
 import 'widgets/calendar_day_cell.dart';
 import 'widgets/calendar_legend.dart';
@@ -116,8 +116,12 @@ class CalendarPage extends ConsumerWidget {
                             date.month == month.month &&
                             date.year == month.year,
                         isToday: date == todayUtc,
-                        onTap: () =>
-                            _showDayPreview(context, date, byDate[iso]),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => DayDetailPage(date: date),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -147,65 +151,6 @@ class CalendarPage extends ConsumerWidget {
     final lastOfMonth = DateTime.utc(month.year, month.month + 1, 0);
     final trailingDays = (7 - lastOfMonth.weekday) % 7;
     return lastOfMonth.add(Duration(days: trailingDays));
-  }
-
-  void _showDayPreview(BuildContext context, DateTime date, ScheduleDay? day) {
-    // Prévia temporária: a Etapa 5 substitui isto pela tela de detalhe do
-    // dia completa (compromissos, trabalho extra, observações).
-    showModalBottomSheet(
-      context: context,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  DateFormat("EEEE, d 'de' MMMM", 'pt_BR').format(date),
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 12),
-                if (day != null) ...[
-                  Row(
-                    children: [
-                      Container(
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          color: colorFromHex(day.category.color),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        day.label,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
-                  if (day.hasTime)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text('${day.startTime} → ${day.endTime}'),
-                    ),
-                  if (day.isException)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(
-                        'Marcação manual (escala automática: ${day.originalCategory?.name})',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                ] else
-                  const Text('Sem informações para este dia.'),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 }
 
