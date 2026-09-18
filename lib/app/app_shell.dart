@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../features/agenda/agenda_page.dart';
 import '../features/appointment_form/appointment_form_page.dart';
 import '../features/calendar/calendar_page.dart';
 import '../features/home/home_page.dart';
 
 /// Navegação inferior (seção 17): Hoje | Calendário | + | Agenda | Ajustes.
 ///
-/// "Hoje" e "Calendário" estão implementadas (Etapas 4 e 5). As outras
-/// abas mostram um aviso honesto em vez de fingir uma tela pronta —
-/// chegam nas etapas 8 e 10.
+/// "Hoje", "Calendário" e "Agenda" estão implementadas (Etapas 4, 5 e 8).
+/// "Ajustes" mostra um aviso honesto em vez de fingir uma tela pronta —
+/// chega na Etapa 10.
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -22,7 +23,7 @@ class _AppShellState extends State<AppShell> {
   static const _pages = [
     HomePage(),
     CalendarPage(),
-    _ComingSoonPage(title: 'Agenda', etapa: 8),
+    AgendaPage(),
     _ComingSoonPage(title: 'Ajustes', etapa: 10),
   ];
 

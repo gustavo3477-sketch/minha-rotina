@@ -70,3 +70,41 @@ final appointmentsForDateProvider =
           .where((a) => expandOccurrences(a, date, date).isNotEmpty)
           .toList();
     });
+
+/// Uma ocorrência concreta de compromisso dentro de um intervalo (Etapa 8,
+/// seção 15/37: a Agenda mostra ocorrências futuras, não só âncoras).
+typedef AgendaEntry = (DateTime date, Appointment appointment);
+
+/// Ocorrências (já expandidas — seção 13) de todos os compromissos dentro
+/// de [range], ordenadas por data e depois por horário de início.
+final agendaInRangeProvider =
+    FutureProvider.family<List<AgendaEntry>, DateRangeKey>((ref, range) async {
+      final repo = ref.watch(appointmentRepositoryProvider);
+      final start = dutil.fromIsoDate(range.$1);
+      final end = dutil.fromIsoDate(range.$2);
+      final candidates = await repo.getInRange(range.$1, range.$2);
+
+      final entries = <AgendaEntry>[];
+      for (final appointment in candidates) {
+        for (final date in expandOccurrences(appointment, start, end)) {
+          entries.add((date, appointment));
+        }
+      }
+      entries.sort((a, b) {
+        final byDate = a.$1.compareTo(b.$1);
+        if (byDate != 0) return byDate;
+        return (a.$2.startTime ?? '').compareTo(b.$2.startTime ?? '');
+      });
+      return entries;
+    });
+
+/// Busca por título/descrição/local (seção 43) — não expande recorrência:
+/// mostra a ocorrência-âncora de cada compromisso encontrado, não é uma
+/// visão de agenda por data.
+final agendaSearchProvider = FutureProvider.family<List<Appointment>, String>((
+  ref,
+  query,
+) {
+  final repo = ref.watch(appointmentRepositoryProvider);
+  return repo.search(query);
+});
