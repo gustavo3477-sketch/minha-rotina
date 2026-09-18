@@ -4,12 +4,11 @@ import '../features/agenda/agenda_page.dart';
 import '../features/appointment_form/appointment_form_page.dart';
 import '../features/calendar/calendar_page.dart';
 import '../features/home/home_page.dart';
+import '../features/settings/settings_page.dart';
 
 /// Navegação inferior (seção 17): Hoje | Calendário | + | Agenda | Ajustes.
 ///
-/// "Hoje", "Calendário" e "Agenda" estão implementadas (Etapas 4, 5 e 8).
-/// "Ajustes" mostra um aviso honesto em vez de fingir uma tela pronta —
-/// chega na Etapa 10.
+/// Todas as abas estão implementadas agora (Etapas 4, 5, 8 e 10).
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
 
@@ -24,7 +23,7 @@ class _AppShellState extends State<AppShell> {
     HomePage(),
     CalendarPage(),
     AgendaPage(),
-    _ComingSoonPage(title: 'Ajustes', etapa: 10),
+    SettingsPage(),
   ];
 
   void _onAddPressed() {
@@ -121,26 +120,6 @@ class _NavButton extends StatelessWidget {
               Text(label, style: TextStyle(color: color, fontSize: 11)),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ComingSoonPage extends StatelessWidget {
-  final String title;
-  final int etapa;
-
-  const _ComingSoonPage({required this.title, required this.etapa});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(
-          '$title chega na Etapa $etapa.',
-          style: Theme.of(context).textTheme.bodyLarge,
         ),
       ),
     );
