@@ -67,18 +67,31 @@ class _LoadingScreen extends StatelessWidget {
   }
 }
 
-class _ErrorScreen extends StatelessWidget {
+class _ErrorScreen extends ConsumerWidget {
   final String message;
 
   const _ErrorScreen({required this.message});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text('Não foi possível iniciar o Minha Rotina:\n$message'),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Não foi possível iniciar o Minha Rotina:\n$message'),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: () {
+                  ref.invalidate(databaseProvider);
+                  ref.invalidate(hasScheduleConfiguredProvider);
+                },
+                child: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
         ),
       ),
     );
