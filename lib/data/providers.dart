@@ -6,6 +6,7 @@ import 'repositories/appointment_repository.dart';
 import 'repositories/category_repository.dart';
 import 'repositories/schedule_repository.dart';
 import 'repositories/settings_repository.dart';
+import 'services/backup_service.dart';
 import 'services/notification_service.dart';
 
 /// Abre o banco uma única vez por execução do app. A tela raiz espera este
@@ -47,4 +48,9 @@ final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
 /// com um fake nos testes de widget, em vez de bater no plugin real.
 final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
+});
+
+/// Backup/restauração (Etapa 11) — ver [BackupService].
+final backupServiceProvider = Provider<BackupService>((ref) {
+  return BackupService();
 });
