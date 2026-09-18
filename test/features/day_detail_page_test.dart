@@ -14,6 +14,7 @@ import 'package:minha_rotina/data/repositories/category_repository.dart';
 import 'package:minha_rotina/data/repositories/schedule_repository.dart';
 import 'package:minha_rotina/domain/default_schedule.dart';
 import 'package:minha_rotina/domain/models/appointment.dart';
+import 'package:minha_rotina/domain/models/recurrence_rule.dart';
 import 'package:minha_rotina/features/day_detail/day_detail_page.dart';
 
 void main() {
@@ -78,6 +79,65 @@ void main() {
       expect(find.text('13:00 → 01:00'), findsOneWidget);
       expect(find.text('Dia 1 de 2'), findsOneWidget);
       expect(find.text('Reunião de equipe'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'compromisso recorrente semanal (seção 13, Etapa 7) aparece na ocorrência calculada',
+    (tester) async {
+      await initializeDateFormatting('pt_BR');
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            databaseProvider.overrideWith((ref) async {
+              final db = await openAppDatabase(
+                path: inMemoryDatabasePath,
+                factory: databaseFactoryFfi,
+              );
+              ref.onDispose(db.close);
+              await CategoryRepository(db).ensureCoreCategories();
+              await ScheduleRepository(db).insertVersion(
+                buildDefault2x2Schedule(
+                  id: 'v1',
+                  referenceDate: '2026-09-16',
+                  workStart: '13:00',
+                  workEnd: '01:00',
+                ),
+              );
+              // Âncora 7 dias antes da data visualizada: repete semanalmente
+              // no mesmo dia da semana, então cai exatamente em 2026-09-16.
+              await AppointmentRepository(db).insert(
+                const Appointment(
+                  id: 'a1',
+                  kind: AppointmentKind.normal,
+                  title: 'Fisioterapia',
+                  date: '2026-09-09',
+                  allDay: true,
+                  recurrence: RecurrenceRule(
+                    frequency: RecurrenceFrequency.weekly,
+                  ),
+                  createdAt: '2020-01-01T00:00:00.000Z',
+                  updatedAt: '2020-01-01T00:00:00.000Z',
+                ),
+              );
+              return db;
+            }),
+          ],
+          child: MaterialApp(
+            home: DayDetailPage(date: DateTime.utc(2026, 9, 16)),
+          ),
+        ),
+      );
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(() async {
+          await Future<void>.delayed(const Duration(milliseconds: 50));
+        });
+        await tester.pump();
+      }
+
+      expect(find.text('Fisioterapia'), findsOneWidget);
+      expect(find.byIcon(Icons.repeat), findsOneWidget);
     },
   );
 }

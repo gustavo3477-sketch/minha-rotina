@@ -7,6 +7,7 @@ import '../../domain/date_utils.dart' as dutil;
 import '../../domain/default_categories.dart';
 import '../../domain/models/appointment.dart';
 import '../../domain/models/category.dart';
+import '../../domain/models/recurrence_rule.dart';
 import '../../domain/providers.dart';
 
 const _reminderOptions = <int?, String>{
@@ -18,13 +19,27 @@ const _reminderOptions = <int?, String>{
   1440: '1 dia antes',
 };
 
+// "custom" fica fora do formulário (Etapa 7): a seção 13 não define um
+// cálculo próprio para ele além do que weekly+weekdays já cobre.
+const _frequencyLabels = <RecurrenceFrequency, String>{
+  RecurrenceFrequency.none: 'Não repete',
+  RecurrenceFrequency.daily: 'Diariamente',
+  RecurrenceFrequency.weekly: 'Semanalmente',
+  RecurrenceFrequency.monthly: 'Mensalmente',
+  RecurrenceFrequency.yearly: 'Anualmente',
+};
+
+const _weekdayLabels = ['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'];
+
 /// Tela de criar/editar compromisso (Etapa 6, seção 11/12) — [existing] nulo
 /// significa criação; caso contrário, edita aquele compromisso (e permite
 /// excluí-lo). "Trabalho extra" (seção 14) é o mesmo formulário com um
 /// campo de valor extra, não uma tela separada.
 ///
-/// Recorrência (seção 13) ainda não aparece aqui — chega na Etapa 7. Todo
-/// compromisso criado agora é uma ocorrência única.
+/// Recorrência (seção 13, Etapa 7): editar ou excluir um compromisso
+/// recorrente age sobre a série inteira (a ocorrência-âncora) — não existe
+/// "só esta ocorrência" ainda, o que exigiria exceções por ocorrência como
+/// as da escala (seção 39), fora do escopo desta etapa.
 class AppointmentFormPage extends ConsumerStatefulWidget {
   final DateTime initialDate;
   final Appointment? existing;
@@ -46,6 +61,8 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
   late final TextEditingController _locationController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _valueController;
+  late final TextEditingController _intervalController;
+  late final TextEditingController _countController;
 
   late DateTime _date;
   late bool _allDay;
@@ -54,6 +71,9 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
   String? _categoryId;
   int? _reminderMinutesBefore;
   late AppointmentKind _kind;
+  late RecurrenceFrequency _frequency;
+  late Set<int> _weekdays;
+  DateTime? _until;
 
   bool get _isEditing => widget.existing != null;
 
@@ -69,6 +89,13 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     _valueController = TextEditingController(
       text: existing?.value != null ? existing!.value!.toStringAsFixed(2) : '',
     );
+    final recurrence = existing?.recurrence ?? const RecurrenceRule();
+    _intervalController = TextEditingController(
+      text: recurrence.interval.toString(),
+    );
+    _countController = TextEditingController(
+      text: recurrence.count?.toString() ?? '',
+    );
     _date = existing != null
         ? dutil.fromIsoDate(existing.date)
         : widget.initialDate;
@@ -78,6 +105,16 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     _categoryId = existing?.categoryId ?? kGeneralAppointmentCategoryId;
     _reminderMinutesBefore = existing?.reminderMinutesBefore;
     _kind = existing?.kind ?? AppointmentKind.normal;
+    // "custom" nunca é produzido por este formulário (ver comentário na
+    // classe) — se aparecer vindo de fora, trata como "não repete" em vez
+    // de quebrar o dropdown, que não tem essa opção.
+    _frequency = recurrence.frequency == RecurrenceFrequency.custom
+        ? RecurrenceFrequency.none
+        : recurrence.frequency;
+    _weekdays = {...(recurrence.weekdays ?? const <int>{})};
+    _until = recurrence.until != null
+        ? dutil.fromIsoDate(recurrence.until!)
+        : null;
   }
 
   @override
@@ -86,6 +123,8 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     _locationController.dispose();
     _descriptionController.dispose();
     _valueController.dispose();
+    _intervalController.dispose();
+    _countController.dispose();
     super.dispose();
   }
 
@@ -160,6 +199,75 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
               ),
             ],
             const SizedBox(height: 16),
+            DropdownButtonFormField<RecurrenceFrequency>(
+              initialValue: _frequency,
+              decoration: const InputDecoration(labelText: 'Repetição'),
+              items: [
+                for (final entry in _frequencyLabels.entries)
+                  DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+              ],
+              onChanged: (value) => setState(
+                () => _frequency = value ?? RecurrenceFrequency.none,
+              ),
+            ),
+            if (_frequency != RecurrenceFrequency.none) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _intervalController,
+                decoration: InputDecoration(labelText: _intervalLabel()),
+                keyboardType: TextInputType.number,
+              ),
+              if (_frequency == RecurrenceFrequency.weekly) ...[
+                const SizedBox(height: 12),
+                Text(
+                  'Dias da semana (opcional — vazio repete no mesmo dia da '
+                  'data acima)',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    for (var weekday = 1; weekday <= 7; weekday++)
+                      FilterChip(
+                        label: Text(_weekdayLabels[weekday - 1]),
+                        selected: _weekdays.contains(weekday),
+                        onSelected: (selected) => setState(() {
+                          if (selected) {
+                            _weekdays.add(weekday);
+                          } else {
+                            _weekdays.remove(weekday);
+                          }
+                        }),
+                      ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 12),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Repetir até (opcional)'),
+                subtitle: Text(
+                  _until != null ? dutil.toIsoDate(_until!) : 'Sem data final',
+                ),
+                trailing: _until != null
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () => setState(() => _until = null),
+                      )
+                    : const Icon(Icons.calendar_month),
+                onTap: _pickUntil,
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _countController,
+                decoration: const InputDecoration(
+                  labelText: 'Número máximo de repetições (opcional)',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+            const SizedBox(height: 16),
             categoriesAsync.when(
               loading: () => const SizedBox.shrink(),
               error: (_, _) => const SizedBox.shrink(),
@@ -225,6 +333,36 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
     );
   }
 
+  String _intervalLabel() {
+    switch (_frequency) {
+      case RecurrenceFrequency.daily:
+        return 'Repetir a cada quantos dias';
+      case RecurrenceFrequency.weekly:
+        return 'Repetir a cada quantas semanas';
+      case RecurrenceFrequency.monthly:
+        return 'Repetir a cada quantos meses';
+      case RecurrenceFrequency.yearly:
+        return 'Repetir a cada quantos anos';
+      case RecurrenceFrequency.none:
+      case RecurrenceFrequency.custom:
+        return 'Repetir a cada';
+    }
+  }
+
+  Future<void> _pickUntil() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _until ?? _date,
+      firstDate: _date,
+      lastDate: DateTime.utc(_date.year + 10),
+    );
+    if (picked != null) {
+      setState(
+        () => _until = DateTime.utc(picked.year, picked.month, picked.day),
+      );
+    }
+  }
+
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -272,6 +410,8 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
 
     final nowIso = DateTime.now().toUtc().toIso8601String();
     final rawValue = _valueController.text.trim().replaceAll(',', '.');
+    final interval = int.tryParse(_intervalController.text.trim()) ?? 1;
+    final rawCount = _countController.text.trim();
     final appointment = Appointment(
       id: widget.existing?.id ?? const Uuid().v4(),
       kind: _kind,
@@ -287,6 +427,16 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
       description: _descriptionController.text.trim().isEmpty
           ? null
           : _descriptionController.text.trim(),
+      recurrence: RecurrenceRule(
+        frequency: _frequency,
+        interval: interval < 1 ? 1 : interval,
+        weekdays:
+            _frequency == RecurrenceFrequency.weekly && _weekdays.isNotEmpty
+            ? _weekdays
+            : null,
+        until: _until != null ? dutil.toIsoDate(_until!) : null,
+        count: rawCount.isEmpty ? null : int.tryParse(rawCount),
+      ),
       reminderMinutesBefore: _reminderMinutesBefore,
       value: _kind == AppointmentKind.extraShift && rawValue.isNotEmpty
           ? double.tryParse(rawValue)

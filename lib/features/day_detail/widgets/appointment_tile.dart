@@ -37,7 +37,17 @@ class AppointmentTile extends StatelessWidget {
           size: 20,
         ),
       ),
-      title: Text(appointment.title),
+      title: Row(
+        children: [
+          Expanded(child: Text(appointment.title)),
+          if (appointment.recurrence.isRecurring)
+            Icon(
+              Icons.repeat,
+              size: 16,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+        ],
+      ),
       subtitle: Text(_subtitle()),
     );
   }

@@ -1,10 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/providers.dart';
+import 'date_utils.dart' as dutil;
 import 'models/appointment.dart';
 import 'models/category.dart';
 import 'models/schedule_exception.dart';
 import 'models/schedule_version.dart';
+import 'recurrence_engine.dart';
 import 'schedule_engine.dart';
 
 /// Todas as categorias (poucas dezenas no máximo — carregar tudo de uma vez
@@ -54,13 +56,17 @@ final scheduleEngineProvider =
       );
     });
 
-/// Compromissos de uma única data (seção 11: um dia pode ter vários).
-///
-/// A expansão de recorrências (seção 13) só chega na Etapa 7 — por ora isto
-/// reflete só a ocorrência-âncora gravada no banco, o que é o esperado
-/// porque não há como criar compromissos ainda (Etapa 6).
+/// Compromissos de uma única data (seção 11: um dia pode ter vários),
+/// já considerando recorrência (seção 13, Etapa 7): [AppointmentRepository.getForDate]
+/// traz a ocorrência-âncora de tudo que PODE cair nesta data (inclusive
+/// recorrentes ancorados antes dela); aqui filtramos para o que realmente
+/// ocorre nesta data específica.
 final appointmentsForDateProvider =
-    FutureProvider.family<List<Appointment>, String>((ref, isoDate) {
+    FutureProvider.family<List<Appointment>, String>((ref, isoDate) async {
       final repo = ref.watch(appointmentRepositoryProvider);
-      return repo.getForDate(isoDate);
+      final candidates = await repo.getForDate(isoDate);
+      final date = dutil.fromIsoDate(isoDate);
+      return candidates
+          .where((a) => expandOccurrences(a, date, date).isNotEmpty)
+          .toList();
     });
