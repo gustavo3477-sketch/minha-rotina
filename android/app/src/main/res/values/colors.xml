@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Cores do texto do widget (Etapa 13) — o cartão de fundo é neutro
+         (widget_background), então o contraste do texto não depende da
+         cor dinâmica da categoria (essa só tinge widget_dot). -->
+    <color name="widget_text_primary">#1A1A1A</color>
+    <color name="widget_text_secondary">#5F5F5F</color>
+</resources>

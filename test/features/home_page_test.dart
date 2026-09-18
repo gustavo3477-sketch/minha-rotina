@@ -16,12 +16,23 @@ import 'package:minha_rotina/data/providers.dart';
 import 'package:minha_rotina/data/repositories/appointment_repository.dart';
 import 'package:minha_rotina/data/repositories/category_repository.dart';
 import 'package:minha_rotina/data/repositories/schedule_repository.dart';
+import 'package:minha_rotina/data/services/widget_service.dart';
 import 'package:minha_rotina/domain/date_utils.dart' as dutil;
 import 'package:minha_rotina/domain/default_categories.dart';
 import 'package:minha_rotina/domain/models/appointment.dart';
 import 'package:minha_rotina/domain/models/cycle_position.dart';
 import 'package:minha_rotina/domain/models/schedule_version.dart';
+import 'package:minha_rotina/domain/schedule_engine.dart';
 import 'package:minha_rotina/features/home/home_page.dart';
+
+// defaultTargetPlatform é android por padrão em flutter_test — o
+// ref.listen do HomePage (Etapa 13) bateria no plugin home_widget real
+// sem um canal de plataforma registrado. Mesmo caso do
+// _FakeNotificationService em appointment_form_page_test.dart.
+class _FakeWidgetService extends WidgetService {
+  @override
+  Future<void> syncScheduleDays(ScheduleEngine engine, DateTime today) async {}
+}
 
 void main() {
   sqfliteFfiInit();
@@ -78,6 +89,7 @@ void main() {
             );
             return db;
           }),
+          widgetServiceProvider.overrideWithValue(_FakeWidgetService()),
         ],
         child: const MaterialApp(home: HomePage()),
       ),

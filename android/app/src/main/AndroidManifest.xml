@@ -3,6 +3,10 @@
          execução exigido a partir do Android 13 (API 33) — pedido em
          NotificationService.initialize(). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- Widget de tela inicial (Etapa 13): reagenda as atualizações
+         diárias perdidas quando o sistema reinicia ou o app é atualizado
+         — ver o comentário em HomeWidgetScheduledUpdateReceiver abaixo. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <application
         android:label="Minha Rotina"
         android:name="${applicationName}"
@@ -28,7 +32,34 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.LAUNCH"/>
+            </intent-filter>
         </activity>
+
+        <!-- Widget de tela inicial (Etapa 13). -->
+        <receiver android:name=".MinhaRotinaWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/widget_today_info"/>
+        </receiver>
+
+        <!-- Reagenda as atualizações diárias do widget (HomeWidget.scheduleWidgetUpdates)
+             perdidas num reboot/atualização do app, e quando a permissão de alarme
+             exato muda — não é exportado, mas esses broadcasts do sistema chegam
+             mesmo assim (ver o comentário na própria classe do plugin). -->
+        <receiver android:name="es.antonborri.home_widget.HomeWidgetScheduledUpdateReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
+            </intent-filter>
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

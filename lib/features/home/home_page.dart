@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../data/providers.dart';
 import '../../domain/date_utils.dart' as dutil;
 import '../../domain/models/category.dart';
 import '../../domain/providers.dart';
@@ -30,6 +31,16 @@ class HomePage extends ConsumerWidget {
     final engineAsync = ref.watch(scheduleEngineProvider(range));
     final appointmentsAsync = ref.watch(appointmentsForDateProvider(todayIso));
     final categoriesAsync = ref.watch(categoriesProvider);
+
+    // Widget de tela inicial (Etapa 13): mantém os dados dele em dia sempre
+    // que a aba Hoje carrega a escala — reaproveita este mesmo cálculo em
+    // vez de o WidgetService recalcular por conta própria.
+    ref.listen(scheduleEngineProvider(range), (previous, next) {
+      next.whenData(
+        (engine) =>
+            ref.read(widgetServiceProvider).syncScheduleDays(engine, today),
+      );
+    });
 
     return Scaffold(
       appBar: AppBar(
