@@ -452,6 +452,11 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
       await repo.insert(appointment);
     }
     ref.invalidate(appointmentsForDateProvider);
+    // Reagenda do zero (Etapa 9): cobre tanto uma edição que muda o horário
+    // ou remove o lembrete quanto o caso de criação.
+    await ref
+        .read(notificationServiceProvider)
+        .scheduleForAppointment(appointment);
     if (mounted) Navigator.pop(context);
   }
 
@@ -477,6 +482,9 @@ class _AppointmentFormPageState extends ConsumerState<AppointmentFormPage> {
 
     await ref.read(appointmentRepositoryProvider).delete(widget.existing!.id);
     ref.invalidate(appointmentsForDateProvider);
+    await ref
+        .read(notificationServiceProvider)
+        .cancelForAppointment(widget.existing!.id);
     if (mounted) Navigator.pop(context);
   }
 }

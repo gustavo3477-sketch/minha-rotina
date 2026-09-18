@@ -6,6 +6,7 @@ import 'repositories/appointment_repository.dart';
 import 'repositories/category_repository.dart';
 import 'repositories/schedule_repository.dart';
 import 'repositories/settings_repository.dart';
+import 'services/notification_service.dart';
 
 /// Abre o banco uma única vez por execução do app. A tela raiz espera este
 /// provider carregar antes de mostrar qualquer tela real — ver
@@ -40,4 +41,10 @@ final appointmentRepositoryProvider = Provider<AppointmentRepository>((ref) {
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   final db = ref.watch(databaseProvider).requireValue;
   return SettingsRepository(db);
+});
+
+/// Uma única instância para o app inteiro (Etapa 9) — permite sobrescrever
+/// com um fake nos testes de widget, em vez de bater no plugin real.
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
 });

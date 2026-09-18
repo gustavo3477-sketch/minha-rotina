@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Lembretes de compromissos (Etapa 9). Consentimento em tempo de
+         execução exigido a partir do Android 13 (API 33) — pedido em
+         NotificationService.initialize(). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:label="minha_rotina"
         android:name="${applicationName}"

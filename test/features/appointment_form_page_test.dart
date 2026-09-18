@@ -14,8 +14,23 @@ import 'package:minha_rotina/data/local/database_helper.dart';
 import 'package:minha_rotina/data/providers.dart';
 import 'package:minha_rotina/data/repositories/appointment_repository.dart';
 import 'package:minha_rotina/data/repositories/category_repository.dart';
+import 'package:minha_rotina/data/services/notification_service.dart';
 import 'package:minha_rotina/domain/models/appointment.dart';
 import 'package:minha_rotina/features/appointment_form/appointment_form_page.dart';
+
+// defaultTargetPlatform é android por padrão em flutter_test (independente
+// do host), então NotificationService bateria no plugin real sem um canal
+// de plataforma registrado. Um fake evita isso nos testes de widget.
+class _FakeNotificationService extends NotificationService {
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> scheduleForAppointment(Appointment appointment) async {}
+
+  @override
+  Future<void> cancelForAppointment(String appointmentId) async {}
+}
 
 Future<void> _settle(WidgetTester tester) async {
   // Mesmo padrão dos outros testes de widget: sqflite_common_ffi resolve via
@@ -62,6 +77,9 @@ void main() {
             await CategoryRepository(db).ensureCoreCategories();
             return db;
           }),
+          notificationServiceProvider.overrideWithValue(
+            _FakeNotificationService(),
+          ),
         ],
         child: MaterialApp(
           home: AppointmentFormPage(initialDate: DateTime.utc(2026, 9, 20)),
@@ -109,6 +127,9 @@ void main() {
             await AppointmentRepository(db).insert(existing);
             return db;
           }),
+          notificationServiceProvider.overrideWithValue(
+            _FakeNotificationService(),
+          ),
         ],
         child: MaterialApp(
           home: AppointmentFormPage(
@@ -161,6 +182,9 @@ void main() {
             await AppointmentRepository(db).insert(existing);
             return db;
           }),
+          notificationServiceProvider.overrideWithValue(
+            _FakeNotificationService(),
+          ),
         ],
         child: MaterialApp(
           home: AppointmentFormPage(

@@ -12,6 +12,10 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        // Exigido pelo flutter_local_notifications (Etapa 9), que usa APIs
+        // de java.time via desugaring — precisa ser habilitado aqui também,
+        // não só no módulo do plugin.
+        isCoreLibraryDesugaringEnabled = true
     }
 
     defaultConfig {
@@ -19,7 +23,10 @@ android {
         applicationId = "com.minharotina.minha_rotina"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // flutter_local_notifications (Etapa 9) exige minSdk 24; o valor
+        // padrão do Flutter já era próximo disso, então fixamos aqui em vez
+        // de depender do default.
+        minSdk = maxOf(flutter.minSdkVersion, 24)
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
@@ -46,4 +53,10 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Exigido pelo flutter_local_notifications (Etapa 9) — ver
+    // isCoreLibraryDesugaringEnabled acima.
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }
