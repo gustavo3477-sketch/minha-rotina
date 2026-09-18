@@ -1,0 +1,25 @@
+workflows:
+  ios-unsigned-build:
+    name: iOS - build sem assinatura (para AltStore/Sideloadly)
+    max_build_duration: 30
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+    scripts:
+      - name: Instalar dependências
+        script: |
+          flutter pub get
+      - name: Rodar testes (mesmos que já passam no Windows)
+        script: |
+          flutter test
+      - name: Buildar iOS sem assinatura da Apple
+        script: |
+          flutter build ios --release --no-codesign
+      - name: Empacotar em .ipa (Payload/Runner.app)
+        script: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload/
+          zip -r minha_rotina_unsigned.ipa Payload
+    artifacts:
+      - build/ios/iphoneos/minha_rotina_unsigned.ipa
