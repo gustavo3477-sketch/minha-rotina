@@ -31,13 +31,16 @@ void main() {
         ),
       );
 
-      final exported = await BackupService().exportBackup(db, tempDir);
+      final exportedBytes = await BackupService().exportBackup(db);
       await db.close();
 
-      expect(exported.existsSync(), isTrue);
+      expect(exportedBytes, isNotEmpty);
+
+      final exportedPath = '${tempDir.path}/exported.db';
+      await File(exportedPath).writeAsBytes(exportedBytes);
 
       final restoredDb = await openAppDatabase(
-        path: exported.path,
+        path: exportedPath,
         factory: databaseFactoryFfi,
       );
       final categories = await CategoryRepository(restoredDb).getAll();

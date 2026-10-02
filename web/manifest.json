@@ -1,11 +1,11 @@
 {
-    "name": "minha_rotina",
-    "short_name": "minha_rotina",
+    "name": "Minha Rotina",
+    "short_name": "Minha Rotina",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Escala de trabalho, compromissos e lembretes.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

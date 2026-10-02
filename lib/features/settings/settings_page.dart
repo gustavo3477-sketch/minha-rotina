@@ -1,7 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../data/providers.dart';
@@ -64,12 +63,13 @@ class SettingsPage extends ConsumerWidget {
   Future<void> _exportBackup(BuildContext context, WidgetRef ref) async {
     try {
       final db = await ref.read(databaseProvider.future);
-      final tempDir = await getTemporaryDirectory();
-      final file = await ref
-          .read(backupServiceProvider)
-          .exportBackup(db, tempDir);
+      final bytes = await ref.read(backupServiceProvider).exportBackup(db);
+      final fileName = 'minha_rotina_backup_${DateTime.now().millisecondsSinceEpoch}.db';
       await SharePlus.instance.share(
-        ShareParams(files: [XFile(file.path)], text: 'Backup do Minha Rotina'),
+        ShareParams(
+          files: [XFile.fromData(bytes, name: fileName, mimeType: 'application/octet-stream')],
+          text: 'Backup do Minha Rotina',
+        ),
       );
     } catch (error) {
       if (context.mounted) {

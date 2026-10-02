@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 /// Versão atual do schema. Toda mudança de estrutura soma 1 aqui e adiciona
 /// um `if (oldVersion < N)` em [_onUpgrade] — nunca edita uma migration já
@@ -19,10 +21,12 @@ Future<Database> openAppDatabase({
 }) async {
   final resolvedPath =
       path ??
-      p.join(
-        (await getApplicationDocumentsDirectory()).path,
-        kDatabaseFileName,
-      );
+      (kIsWeb
+          ? kDatabaseFileName
+          : p.join(
+              (await getApplicationDocumentsDirectory()).path,
+              kDatabaseFileName,
+            ));
 
   final options = OpenDatabaseOptions(
     version: kDatabaseVersion,
@@ -39,8 +43,11 @@ Future<Database> openAppDatabase({
   );
 
   // Mesma chamada (via DatabaseFactory) tanto para o app real quanto para
-  // testes com sqflite_common_ffi — evita duas assinaturas diferentes.
-  final resolvedFactory = factory ?? databaseFactory;
+  // testes com sqflite_common_ffi — evita duas assinaturas diferentes. Na
+  // Web não existe arquivo de verdade: o sqflite_common_ffi_web grava tudo
+  // num banco SQLite compilado para WASM, persistido no IndexedDB do
+  // navegador.
+  final resolvedFactory = factory ?? (kIsWeb ? databaseFactoryFfiWeb : databaseFactory);
   return resolvedFactory.openDatabase(resolvedPath, options: options);
 }
 
