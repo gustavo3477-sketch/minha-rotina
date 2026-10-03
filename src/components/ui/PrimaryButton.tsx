@@ -2,7 +2,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react'
 
 interface PrimaryButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   children: ReactNode
-  variant?: 'primary' | 'secondary' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
   fullWidth?: boolean
 }
 
@@ -10,6 +10,7 @@ const VARIANT_CLASSES: Record<string, string> = {
   primary: 'bg-primary text-white active:bg-primary-dark',
   secondary: 'bg-surface-elevated text-text-primary active:bg-surface-secondary',
   ghost: 'bg-transparent text-primary active:bg-primary/10',
+  danger: 'bg-danger text-white active:opacity-80',
 }
 
 export function PrimaryButton({

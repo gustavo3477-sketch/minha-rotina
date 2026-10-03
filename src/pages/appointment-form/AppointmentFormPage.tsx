@@ -3,9 +3,12 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { Repeat, Bell as BellIcon } from 'lucide-react'
 import { useAppStore } from '../../store/appStore'
 import { createId } from '../../lib/id'
-import { toISODate } from '../../lib/date-utils'
+import { fromISODate, toISODate } from '../../lib/date-utils'
+import { formatDayMonthYearLong } from '../../lib/format'
 import { toast } from '../../store/toastStore'
 import { AppHeader } from '../../components/layout/AppHeader'
+import { EmptyState } from '../../components/ui/EmptyState'
+import { Modal } from '../../components/ui/Modal'
 import { SegmentedControl } from '../../components/ui/SegmentedControl'
 import { FormField, TextArea, TextInput } from '../../components/ui/FormField'
 import { Switch } from '../../components/ui/Switch'
@@ -54,6 +57,7 @@ export function AppointmentFormPage() {
   const appointments = useAppStore((s) => s.appointments)
   const addAppointment = useAppStore((s) => s.addAppointment)
   const updateAppointment = useAppStore((s) => s.updateAppointment)
+  const deleteAppointment = useAppStore((s) => s.deleteAppointment)
   const setDayMark = useAppStore((s) => s.setDayMark)
 
   const editing = id ? appointments.find((a) => a.id === id) : undefined
@@ -78,6 +82,7 @@ export function AppointmentFormPage() {
   const [recurrenceSheetOpen, setRecurrenceSheetOpen] = useState(false)
   const [reminderSheetOpen, setReminderSheetOpen] = useState(false)
   const [dayTypeSheetOpen, setDayTypeSheetOpen] = useState(false)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
 
   const selectedCategory = useMemo(() => categories.find((c) => c.id === categoryId), [categories, categoryId])
   const selectedDayType = useMemo(() => dayTypes.find((d) => d.id === changeDayTypeId), [dayTypes, changeDayTypeId])
@@ -114,7 +119,7 @@ export function AppointmentFormPage() {
     }
 
     if (editing) {
-      updateAppointment(editing.id, base)
+      updateAppointment(editing.id, { ...base, updatedAt: new Date().toISOString() })
     } else {
       const appointment: Appointment = {
         id: createId(),
@@ -129,16 +134,47 @@ export function AppointmentFormPage() {
     navigate(-1)
   }
 
+  async function handleDelete() {
+    if (!editing) return
+    await deleteAppointment(editing.id)
+    setDeleteConfirmOpen(false)
+    toast.success('Compromisso excluído')
+    navigate(-1)
+  }
+
+  if (id && !editing) {
+    return (
+      <div className="flex flex-col gap-5 pb-8">
+        <AppHeader showBack title="Compromisso" />
+        <div className="px-5">
+          <EmptyState title="Compromisso não encontrado" description="Ele pode já ter sido excluído." />
+        </div>
+      </div>
+    )
+  }
+
+  const isRecurring = !!editing && editing.recurrence.frequency !== 'NONE'
+
   return (
     <div className="flex flex-col gap-5 pb-8">
       <AppHeader showBack title={titleByKind[kind]} />
 
       <div className="flex flex-col gap-5 px-5">
-        <SegmentedControl
-          options={KIND_OPTIONS}
-          value={kind}
-          onChange={(v) => setKind(v as AppointmentKind)}
-        />
+        {!editing && (
+          <SegmentedControl
+            options={KIND_OPTIONS}
+            value={kind}
+            onChange={(v) => setKind(v as AppointmentKind)}
+          />
+        )}
+
+        {isRecurring && editing && (
+          <div className="rounded-2xl bg-surface px-4 py-3 text-xs text-text-secondary">
+            Este compromisso se repete (começou em {formatDayMonthYearLong(fromISODate(editing.date))}). Alterar ou
+            excluir vale para <span className="font-semibold text-text-primary">todas as repetições</span>. Para
+            parar de repetir, mude "Repetição" para "Não repetir".
+          </div>
+        )}
 
         {kind === 'CHANGE' ? (
           <>
@@ -242,7 +278,28 @@ export function AppointmentFormPage() {
         )}
 
         <PrimaryButton onClick={handleSave}>SALVAR</PrimaryButton>
+
+        {editing && (
+          <PrimaryButton variant="danger" onClick={() => setDeleteConfirmOpen(true)}>
+            EXCLUIR
+          </PrimaryButton>
+        )}
       </div>
+
+      <Modal open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} title="Excluir compromisso?">
+        <p className="mb-4 text-sm text-text-secondary">
+          “{editing?.title}” será excluído
+          {isRecurring ? ', junto com todas as suas repetições' : ''}. Isso não pode ser desfeito.
+        </p>
+        <div className="flex gap-3">
+          <PrimaryButton variant="secondary" onClick={() => setDeleteConfirmOpen(false)}>
+            Cancelar
+          </PrimaryButton>
+          <PrimaryButton variant="danger" onClick={handleDelete}>
+            Excluir
+          </PrimaryButton>
+        </div>
+      </Modal>
 
       <BottomSheet open={categorySheetOpen} onClose={() => setCategorySheetOpen(false)} title="Categoria">
         <div className="flex flex-col">

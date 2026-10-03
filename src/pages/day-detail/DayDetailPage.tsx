@@ -143,7 +143,12 @@ export function DayDetailPage() {
         ) : (
           <div className="flex flex-col divide-y divide-divider">
             {appointments.map((a) => (
-              <AppointmentCard key={a.id} appointment={a} category={categoryMap.get(a.categoryId ?? '')} />
+              <AppointmentCard
+                key={a.id}
+                appointment={a}
+                category={categoryMap.get(a.categoryId ?? '')}
+                onClick={() => navigate(`/compromisso/${a.id}`)}
+              />
             ))}
           </div>
         )}
@@ -165,7 +170,7 @@ export function DayDetailPage() {
         ) : (
           <div className="flex flex-col divide-y divide-divider">
             {extraShifts.map((a) => (
-              <AppointmentCard key={a.id} appointment={a} />
+              <AppointmentCard key={a.id} appointment={a} onClick={() => navigate(`/compromisso/${a.id}`)} />
             ))}
           </div>
         )}
