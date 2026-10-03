@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { addDays } from 'date-fns'
-import { toISODate } from '../../lib/date-utils'
-import { formatAgendaGroupLabel, formatDayMonthLong } from '../../lib/format'
+import { fromISODate, toISODate } from '../../lib/date-utils'
+import { formatAgendaGroupLabel, formatDayMonthLong, formatDayMonthYearLong } from '../../lib/format'
+import { useAppStore } from '../../store/appStore'
 import { useAgendaEntries, type AgendaEntryType } from '../../hooks/useAgendaEntries'
 import { AgendaItem } from '../../components/appointments/AgendaItem'
 import { FilterChip } from '../../components/ui/FilterChip'
@@ -16,10 +17,27 @@ const FILTERS: { value: 'ALL' | AgendaEntryType; label: string }[] = [
   { value: 'EXTRA', label: 'Extras' },
 ]
 
+const MIN_WINDOW_DAYS = 60
+const MAX_WINDOW_DAYS = 730
+
 export function AgendaPage() {
   const navigate = useNavigate()
   const today = useMemo(() => new Date(), [])
-  const rangeEnd = useMemo(() => addDays(today, 60), [today])
+  const appointments = useAppStore((s) => s.appointments)
+
+  // A agenda mostra pelo menos os próximos 60 dias e se estende até o último
+  // compromisso único (ou fim de série) cadastrado, até no máximo 2 anos.
+  const rangeEnd = useMemo(() => {
+    const maxEnd = addDays(today, MAX_WINDOW_DAYS)
+    let end = addDays(today, MIN_WINDOW_DAYS)
+    for (const a of appointments) {
+      const last = a.recurrence.frequency === 'NONE' ? a.date : a.recurrence.until
+      if (!last) continue
+      const lastDate = fromISODate(last)
+      if (lastDate > end) end = lastDate
+    }
+    return end > maxEnd ? maxEnd : end
+  }, [appointments, today])
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<'ALL' | AgendaEntryType>('ALL')
@@ -82,6 +100,9 @@ export function AgendaPage() {
               </div>
             )
           })}
+          <p className="pb-4 text-center text-xs text-text-muted">
+            Mostrando até {formatDayMonthYearLong(rangeEnd)}
+          </p>
         </div>
       )}
     </div>
